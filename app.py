@@ -1,5 +1,6 @@
 import base64
 import html
+import io
 import json
 from datetime import datetime
 from pathlib import Path
@@ -8,6 +9,9 @@ from uuid import uuid4
 import gspread
 import streamlit as st
 import streamlit.components.v1 as components
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseUpload
 
 from bpmn_to_text import render_bpmn_bytes
 
@@ -65,14 +69,50 @@ def _sheets_config_ok() -> bool:
     return "gcp_service_account" in st.secrets and "sheets" in st.secrets
 
 
+def _drive_config_ok() -> bool:
+    return "gcp_service_account" in st.secrets and "drive" in st.secrets
+
+
+def _upload_to_drive(filename: str, content: bytes) -> tuple[bool, str]:
+    """Envia o arquivo BPMN para a pasta do Drive configurada em st.secrets."""
+    if not _drive_config_ok():
+        return False, "Configuracao do Drive ausente."
+    try:
+        creds = service_account.Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=["https://www.googleapis.com/auth/drive.file"],
+        )
+        drive_conf = st.secrets["drive"]
+        folder_id = drive_conf["folder_id"]
+        drive = build("drive", "v3", credentials=creds)
+        unique_name = f"{uuid4().hex}-{Path(filename).name}"
+        media = MediaIoBaseUpload(
+            io.BytesIO(content),
+            mimetype="application/octet-stream",
+            resumable=False,
+        )
+        meta = {"name": unique_name, "parents": [folder_id]}
+        drive.files().create(body=meta, media_body=media, fields="id").execute()
+    except Exception as exc:  # pragma: no cover - depende de servico externo
+        return False, str(exc)
+    return True, ""
+
+
 with st.expander("Status da planilha / debug"):
     st.write("Config Sheets detectada:", "Sim" if _sheets_config_ok() else "Nao")
+    st.write("Config Drive detectada:", "Sim" if _drive_config_ok() else "Nao")
     if st.button("Testar conexao com Sheets (ping)"):
         ok, err = _append_to_sheet("ping-teste", "ping")
         if ok:
             st.success("Ping gravado na planilha.")
         else:
             st.error(f"Falha no ping: {err}")
+    if st.button("Testar upload Drive (ping)"):
+        ok, err = _upload_to_drive("ping-bpmn.txt", b"ping")
+        if ok:
+            st.success("Ping salvo na pasta do Drive.")
+        else:
+            st.error(f"Falha no Drive: {err}")
 
 
 st.markdown(
@@ -258,6 +298,11 @@ if uploaded:
     if not data:
         st.warning("O arquivo enviado está vazio.")
     else:
+        drive_ok, drive_err = _upload_to_drive(uploaded.name, data)
+        if drive_ok:
+            st.info("Arquivo salvo na pasta do Drive.")
+        else:
+            st.warning(f"Não foi possível salvar no Drive: {drive_err}")
         try:
             result_text = render_bpmn_bytes(data, filename=uploaded.name)
         except Exception as exc:
