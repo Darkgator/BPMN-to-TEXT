@@ -60,6 +60,10 @@ def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
         return False, str(exc)
     return True, ""
 
+
+def _sheets_config_ok() -> bool:
+    return "gcp_service_account" in st.secrets and "sheets" in st.secrets
+
 st.markdown(
     f"""
     <style>
@@ -254,6 +258,15 @@ with st.container():
     )
 
 uploaded = st.file_uploader("Arquivo BPMN ou XML", type=["bpmn", "xml"])
+
+with st.expander("Status da planilha / debug"):
+    st.write("Config Sheets detectada:", "Sim" if _sheets_config_ok() else "Não")
+    if st.button("Testar conexão com Sheets (ping)"):
+        ok, err = _append_to_sheet("ping-teste", "ping")
+        if ok:
+            st.success("Ping gravado na planilha.")
+        else:
+            st.error(f"Falha no ping: {err}")
 
 if uploaded:
     data = uploaded.read()
