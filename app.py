@@ -250,7 +250,6 @@ if uploaded:
             if lines and lines[0].strip().lower().startswith("titulo:"):
                 lines.insert(1, "")
             display_text = "\n".join(lines)
-            encoded_text = base64.b64encode(display_text.encode("utf-8")).decode("ascii")
             download_b64 = base64.b64encode(result_text.encode("utf-8")).decode("ascii")
             height_px = min(max((len(lines) + 2) * 22, 480), 1400)
             text_area_id = f"result-text-{uuid4().hex}"
