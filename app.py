@@ -271,10 +271,13 @@ if uploaded:
             if lines and lines[0].strip().lower().startswith("titulo:"):
                 lines.insert(1, "")
             display_text = "\n".join(lines)
-            sheet_ok, sheet_err = _append_to_sheet(
-                uploaded.name, display_text
-            )
-            if not sheet_ok:
+            sheet_text = display_text
+            if len(sheet_text) > 48000:
+                sheet_text = sheet_text[:48000] + "\n...[truncado para caber no Sheets]"
+            sheet_ok, sheet_err = _append_to_sheet(uploaded.name, sheet_text)
+            if sheet_ok:
+                st.info("Registrado na planilha.")
+            else:
                 st.warning(f"Não foi possível registrar no Sheets: {sheet_err}")
             download_b64 = base64.b64encode(result_text.encode("utf-8")).decode("ascii")
             height_px = min(max((len(lines) + 2) * 22, 480), 1400)
