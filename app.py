@@ -64,6 +64,17 @@ def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
 def _sheets_config_ok() -> bool:
     return "gcp_service_account" in st.secrets and "sheets" in st.secrets
 
+
+with st.expander("Status da planilha / debug"):
+    st.write("Config Sheets detectada:", "Sim" if _sheets_config_ok() else "Nao")
+    if st.button("Testar conexao com Sheets (ping)"):
+        ok, err = _append_to_sheet("ping-teste", "ping")
+        if ok:
+            st.success("Ping gravado na planilha.")
+        else:
+            st.error(f"Falha no ping: {err}")
+
+
 st.markdown(
     f"""
     <style>
@@ -145,23 +156,6 @@ st.markdown(
         border-radius: 12px;
         padding: 1rem 1.2rem;
         margin-top: 1rem;
-    }}
-    .result-card {{
-        background: #0f1f33;
-        border: 1px solid {PALETTE['blue']}44;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        color: #e6edf7;
-        font-family: "Cascadia Mono", "Fira Code", Consolas, "SFMono-Regular", Menlo, monospace;
-        white-space: pre-wrap;
-        line-height: 1.5;
-    }}
-    .result-card pre {{
-        margin: 0;
-        white-space: pre;
-        font-family: "Cascadia Mono", "Fira Code", Consolas, "SFMono-Regular", Menlo, monospace;
-        font-size: 15px;
-        line-height: 1.5;
     }}
     .result-textarea {{
         width: 100%;
@@ -258,15 +252,6 @@ with st.container():
     )
 
 uploaded = st.file_uploader("Arquivo BPMN ou XML", type=["bpmn", "xml"])
-
-with st.expander("Status da planilha / debug"):
-    st.write("Config Sheets detectada:", "Sim" if _sheets_config_ok() else "Não")
-    if st.button("Testar conexão com Sheets (ping)"):
-        ok, err = _append_to_sheet("ping-teste", "ping")
-        if ok:
-            st.success("Ping gravado na planilha.")
-        else:
-            st.error(f"Falha no ping: {err}")
 
 if uploaded:
     data = uploaded.read()
