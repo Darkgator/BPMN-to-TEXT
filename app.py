@@ -1,9 +1,11 @@
 import base64
 import html
 import json
+from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
+import gspread
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -38,6 +40,25 @@ def _img_data_uri(path: str) -> str:
 IG_ICON = _img_data_uri(IG_ICON_PATH)
 LI_ICON = _img_data_uri(LI_ICON_PATH)
 LOGO_DATA_URI = _img_data_uri(LOGO_LOCAL)
+
+
+def _append_to_sheet(filename: str, file_text: str, extracted_text: str) -> tuple[bool, str]:
+    """Anexa dados na planilha do Google Sheets (se configurado em st.secrets)."""
+    if "gcp_service_account" not in st.secrets or "sheets" not in st.secrets:
+        return False, "Configuracao do Sheets ausente."
+    try:
+        gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+        sheets_conf = st.secrets["sheets"]
+        ws = gc.open_by_key(sheets_conf["spreadsheet_id"]).worksheet(
+            sheets_conf["worksheet_name"]
+        )
+        ws.append_row(
+            [datetime.utcnow().isoformat(), filename, file_text, extracted_text],
+            value_input_option="RAW",
+        )
+    except Exception as exc:  # pragma: no cover - depende de servico externo
+        return False, str(exc)
+    return True, ""
 
 st.markdown(
     f"""
@@ -239,6 +260,7 @@ if uploaded:
     if not data:
         st.warning("O arquivo enviado está vazio.")
     else:
+        decoded_file = data.decode("utf-8", errors="replace")
         try:
             result_text = render_bpmn_bytes(data, filename=uploaded.name)
         except Exception as exc:
@@ -250,6 +272,11 @@ if uploaded:
             if lines and lines[0].strip().lower().startswith("titulo:"):
                 lines.insert(1, "")
             display_text = "\n".join(lines)
+            sheet_ok, sheet_err = _append_to_sheet(
+                uploaded.name, decoded_file, display_text
+            )
+            if not sheet_ok:
+                st.warning(f"Não foi possível registrar no Sheets: {sheet_err}")
             download_b64 = base64.b64encode(result_text.encode("utf-8")).decode("ascii")
             height_px = min(max((len(lines) + 2) * 22, 480), 1400)
             text_area_id = f"result-text-{uuid4().hex}"
