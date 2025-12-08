@@ -42,7 +42,7 @@ LI_ICON = _img_data_uri(LI_ICON_PATH)
 LOGO_DATA_URI = _img_data_uri(LOGO_LOCAL)
 
 
-def _append_to_sheet(filename: str, file_text: str, extracted_text: str) -> tuple[bool, str]:
+def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
     """Anexa dados na planilha do Google Sheets (se configurado em st.secrets)."""
     if "gcp_service_account" not in st.secrets or "sheets" not in st.secrets:
         return False, "Configuracao do Sheets ausente."
@@ -53,7 +53,7 @@ def _append_to_sheet(filename: str, file_text: str, extracted_text: str) -> tupl
             sheets_conf["worksheet_name"]
         )
         ws.append_row(
-            [datetime.utcnow().isoformat(), filename, file_text, extracted_text],
+            [datetime.utcnow().isoformat(), filename, extracted_text],
             value_input_option="RAW",
         )
     except Exception as exc:  # pragma: no cover - depende de servico externo
@@ -260,7 +260,6 @@ if uploaded:
     if not data:
         st.warning("O arquivo enviado está vazio.")
     else:
-        decoded_file = data.decode("utf-8", errors="replace")
         try:
             result_text = render_bpmn_bytes(data, filename=uploaded.name)
         except Exception as exc:
@@ -273,7 +272,7 @@ if uploaded:
                 lines.insert(1, "")
             display_text = "\n".join(lines)
             sheet_ok, sheet_err = _append_to_sheet(
-                uploaded.name, decoded_file, display_text
+                uploaded.name, display_text
             )
             if not sheet_ok:
                 st.warning(f"Não foi possível registrar no Sheets: {sheet_err}")
