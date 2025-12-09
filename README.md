@@ -1,46 +1,40 @@
-# BPMN to TEXT (Streamlit)
+# BPMN to TEXT
 
-Aplicação web em Streamlit para receber arquivos BPMN/XML e devolver o texto extraído. O núcleo de processamento usa o script `bpmn_to_text.py`, já validado em execução via terminal.
+Aplicacao em Streamlit que recebe arquivos BPMN/XML e devolve a narrativa em texto. Ideal para usar em IAs generativas (ChatGPT, Gemini, Claude, etc.), que lidam melhor com texto estruturado do que com BPMN puro. O processamento fica em `bpmn_to_text.py` e a interface em `app.py`.
 
-## Estrutura do projeto
-- `app.py`: interface Streamlit com upload e exibição do texto gerado.
-- `bpmn_to_text.py`: funções de parsing e conversão de BPMN para texto.
-- `requirements.txt`: dependências mínimas (`streamlit`).
-- `assets/`: logos e ícones usados na interface.
-- `.gitignore`: regras básicas (venv, caches, .streamlit, IDE).
+## Como usar (online)
+- App publicado: https://bpmn-to-text.streamlit.app/
+- Envie um `.bpmn` ou `.xml`; visualize e baixe o texto em `.txt`.
 
-## Como executar localmente
-1) Crie e ative um ambiente virtual (opcional, mas recomendado):
+## Como rodar local
+1) Ambiente virtual (opcional, recomendado):
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
 ```
-
-2) Instale as dependências:
+2) Dependencias:
 ```bash
 pip install -r requirements.txt
 ```
-
-3) Suba a interface:
+3) Subir o app:
 ```bash
 streamlit run app.py
 ```
+4) Abra `http://localhost:8501`, envie o BPMN/XML e baixe o texto.
 
-4) No navegador, envie um arquivo `.bpmn` ou `.xml` para ver o texto extraído e baixar o resultado em `.txt`.
-
-## Deploy no Streamlit Cloud
-1) Crie um repositório no GitHub contendo `app.py`, `bpmn_to_text.py`, `requirements.txt` e a pasta `assets/`.
-2) Acesse https://share.streamlit.io/ (Streamlit Community Cloud), clique em “New app”, conecte ao GitHub e selecione repositório/branch.
-3) Informe o caminho do app (ex.: `app.py`) e conclua. Cada push na branch configurada refaz o deploy.
-4) Se precisar de secrets, configure-os em Settings > Secrets no painel do app.
-
-## Uso via linha de comando
-O arquivo `bpmn_to_text.py` mantém a função `main()` para rodar direto pelo terminal, escolhendo um BPMN em disco:
+## CLI
+Processar um BPMN direto no terminal:
 ```bash
 python bpmn_to_text.py caminho/para/arquivo.bpmn
 ```
 
-## Próximos passos sugeridos
-- Adicionar testes automatizados para cenários de BPMN complexos.
-- Ajustar mensagens/labels da interface conforme feedback dos usuários.
-- Publicar o repositório no GitHub e configurar CI (formatação/segurança).
+## Estrutura
+- `app.py`: interface Streamlit, upload e exibicao do texto.
+- `bpmn_to_text.py`: parsing e conversao BPMN -> texto.
+- `assets/`: logos e icones.
+- `requirements.txt`: dependencias.
+- `.gitignore`: itens ignorados (venv, caches, .streamlit, IDE).
+
+## Contato
+- Instagram: https://www.instagram.com/alexandre.processos?igsh=MWMydHZwNjM5c2d3
+- LinkedIn: https://www.linkedin.com/in/alexandre-barroso-miranda
