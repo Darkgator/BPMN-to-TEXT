@@ -70,7 +70,7 @@ def pick_process(defs):
 
 def collect_elements(proc):
 
-    """Extrai n³s (tarefas, gateways, eventos) e sequenceFlows."""
+    """Extrai nós (tarefas, gateways, eventos) e sequenceFlows."""
 
     nodes = {}
 
@@ -168,7 +168,7 @@ def collect_elements(proc):
 
 def collect_lanes(proc):
 
-    """Mapeia n³s para lanes (por flowNodeRef) e retorna nomes das lanes."""
+    """Mapeia nós para lanes (por flowNodeRef) e retorna nomes das lanes."""
 
     node_lane = {}
 
@@ -198,7 +198,7 @@ def collect_lanes(proc):
 
 def collect_di_bounds(defs, node_ids, lane_ids):
 
-    """Coleta Bounds dos BPMNShape para n³s e lanes (para inferir ator via DI)."""
+    """Coleta Bounds dos BPMNShape para nós e lanes (para inferir ator via DI)."""
 
     node_bounds = {}
 
@@ -242,7 +242,7 @@ def collect_di_bounds(defs, node_ids, lane_ids):
 
 def collect_artifacts(defs, node_ids: set) -> Dict[str, List[Tuple[str, str]]]:
 
-    """Associa n³s a documentos, sistemas e anota§µes, separando anota§µes ³rf£s."""
+    """Associa nós a documentos, sistemas e anotações, separando anotações órfãs."""
 
     annotations = {}
 
@@ -510,7 +510,7 @@ def format_number(parts):
 
 def compare_parts(a, b):
 
-    """Compara listas num©ricas lexicograficamente."""
+    """Compara listas numéricas lexicograficamente."""
 
     for xa, xb in zip(a, b):
 
@@ -562,7 +562,7 @@ def describe_node(node):
 
 def _clean_note(text: str) -> str:
 
-    """Normaliza texto de anotação para linha ºnica."""
+    """Normaliza texto de anotação para linha única."""
 
     return " ".join((text or "").split())
 
@@ -572,7 +572,7 @@ def _clean_note(text: str) -> str:
 
 def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_set, number_map, branch_state, artifacts):
 
-    """DFS com numeração hier?rquica; evita duplicar n³s j? descritos e corta loops no mesmo caminho."""
+    """DFS com numeração hier?rquica; evita duplicar nós j? descritos e corta loops no mesmo caminho."""
 
     lines = []
 
@@ -580,7 +580,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
     if node["type"] == "Elemento":
 
-        return lines, numbering  # ignora n³s desconhecidos
+        return lines, numbering  # ignora nós desconhecidos
 
     indent = "    " * (len(numbering) - 1)
 
@@ -610,11 +610,11 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
         elif cmp > 0:
 
-            label = "avan§a para"
+            label = "avança para"
 
         else:
 
-            label = "referªncia"
+            label = "referência"
 
         lines.append(f"{indent}({label} {prev['num_str']})")
 
@@ -634,7 +634,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
 
 
-    # Se for gateway apenas de convergªncia (exceto paralelos), n?o imprime linha; passa adiante
+    # Se for gateway apenas de convergência (exceto paralelos), n?o imprime linha; passa adiante
 
     if is_converging_gateway and outs and not is_parallel_convergence:
 
@@ -682,7 +682,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
     if is_parallel_convergence:
 
-        desc = "Fim do Gateway Paralelo (convergªncia)"
+        desc = "Fim do Gateway Paralelo (convergência)"
 
     lines.append(f"{prefix}{desc}")
 
@@ -692,7 +692,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
         "userTask": "Atividade de Usu?rio",
 
-        "serviceTask": "Atividade de Servi§o",
+        "serviceTask": "Atividade de Serviço",
 
         "sendTask": "Atividade de Envio",
 
@@ -1071,7 +1071,7 @@ def render_bpmn(path: Path) -> str:
 
     if msg_lines:
 
-        all_lines.append("Intera§µes entre processos (message flows):")
+        all_lines.append("Interações entre processos (message flows):")
 
         all_lines.append("- Origem (Processo / Elemento) | Destino (Processo / Elemento) | Mensagem")
 
@@ -1113,7 +1113,7 @@ def render_bpmn(path: Path) -> str:
 
 def pick_bpmn_from_folder(base: Path) -> Path:
 
-    """Lista BPMN no diret³rio base e permite escolher pelo ­ndice."""
+    """Lista BPMN no diretório base e permite escolher pelo índice."""
 
     candidates: List[Path] = sorted(base.glob("*.bpmn"))
 
@@ -1129,7 +1129,7 @@ def pick_bpmn_from_folder(base: Path) -> Path:
 
     try:
 
-        choice = input("Nºmero do BPMN: ").strip()
+        choice = input("Número do BPMN: ").strip()
 
     except EOFError:
 
