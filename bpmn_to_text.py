@@ -572,7 +572,7 @@ def _clean_note(text: str) -> str:
 
 def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_set, number_map, branch_state, artifacts):
 
-    """DFS com numeração hier?rquica; evita duplicar nós j? descritos e corta loops no mesmo caminho."""
+    """DFS com numeração hierárquica; evita duplicar nós já descritos e corta loops no mesmo caminho."""
 
     lines = []
 
@@ -634,7 +634,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
 
 
-    # Se for gateway apenas de convergência (exceto paralelos), n?o imprime linha; passa adiante
+    # Se for gateway apenas de convergência (exceto paralelos), não imprime linha; passa adiante
 
     if is_converging_gateway and outs and not is_parallel_convergence:
 
@@ -690,7 +690,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
         "task": "(sem tipo)",
 
-        "userTask": "Atividade de Usu?rio",
+        "userTask": "Atividade de Usuário",
 
         "serviceTask": "Atividade de Serviço",
 
@@ -1137,7 +1137,7 @@ def pick_bpmn_from_folder(base: Path) -> Path:
 
     if not choice.isdigit() or not (1 <= int(choice) <= len(candidates)):
 
-        raise SystemExit("Seleção inv?lida.")
+        raise SystemExit("Seleção inválida.")
 
     return candidates[int(choice) - 1]
 
