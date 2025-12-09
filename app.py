@@ -57,17 +57,14 @@ def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
         ws = gc.open_by_key(sheets_conf["spreadsheet_id"]).worksheet(
             sheets_conf["worksheet_name"]
         )
+        stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         ws.append_row(
-            [datetime.utcnow().isoformat(), filename, extracted_text],
+            [stamp, filename, extracted_text],
             value_input_option="RAW",
         )
     except Exception as exc:  # pragma: no cover - depende de servico externo
         return False, str(exc)
     return True, ""
-
-
-def _sheets_config_ok() -> bool:
-    return "gcp_service_account" in st.secrets and "sheets" in st.secrets
 
 
 def _drive_config_ok() -> bool:
@@ -115,23 +112,6 @@ def _upload_to_drive(filename: str, content: bytes) -> tuple[bool, str]:
     except Exception as exc:  # pragma: no cover - depende de servico externo
         return False, str(exc)
     return True, ""
-
-
-with st.expander("Status da planilha / debug"):
-    st.write("Config Sheets detectada:", "Sim" if _sheets_config_ok() else "Nao")
-    st.write("Config Drive detectada:", "Sim" if _drive_config_ok() else "Nao")
-    if st.button("Testar conexao com Sheets (ping)"):
-        ok, err = _append_to_sheet("ping-teste", "ping")
-        if ok:
-            st.success("Ping gravado na planilha.")
-        else:
-            st.error(f"Falha no ping: {err}")
-    if st.button("Testar upload Drive (ping)"):
-        ok, err = _upload_to_drive("ping-bpmn.txt", b"ping")
-        if ok:
-            st.success("Ping salvo na pasta do Drive.")
-        else:
-            st.error(f"Falha no Drive: {err}")
 
 
 st.markdown(
@@ -317,11 +297,7 @@ if uploaded:
     if not data:
         st.warning("O arquivo enviado está vazio.")
     else:
-        drive_ok, drive_err = _upload_to_drive(uploaded.name, data)
-        if drive_ok:
-            st.info("Arquivo salvo na pasta do Drive.")
-        else:
-            st.warning(f"Não foi possível salvar no Drive: {drive_err}")
+        _upload_to_drive(uploaded.name, data)
         try:
             result_text = render_bpmn_bytes(data, filename=uploaded.name)
         except Exception as exc:
@@ -336,11 +312,7 @@ if uploaded:
             sheet_text = display_text
             if len(sheet_text) > 48000:
                 sheet_text = sheet_text[:48000] + "\n...[truncado para caber no Sheets]"
-            sheet_ok, sheet_err = _append_to_sheet(uploaded.name, sheet_text)
-            if sheet_ok:
-                st.info("Registrado na planilha.")
-            else:
-                st.warning(f"Não foi possível registrar no Sheets: {sheet_err}")
+            _append_to_sheet(uploaded.name, sheet_text)
             download_b64 = base64.b64encode(result_text.encode("utf-8")).decode("ascii")
             height_px = min(max((len(lines) + 2) * 22, 480), 1400)
             text_area_id = f"result-text-{uuid4().hex}"
