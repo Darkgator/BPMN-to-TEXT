@@ -536,6 +536,21 @@ def describe_node(node):
 
     name = node.get("name") or ""
 
+    task_kinds = {
+        "task",
+        "userTask",
+        "serviceTask",
+        "sendTask",
+        "receiveTask",
+        "manualTask",
+    }
+
+    if node.get("kind") in task_kinds:
+
+        display = name or "(sem nome)"
+
+        return f"Atividade: {display}"
+
     is_gateway = node["type"].startswith("Gateway")
 
     is_event = "Event" in node.get("kind", "")
@@ -590,14 +605,6 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
 
 
-    if node_id in path_set:
-
-        lines.append(f"{indent}(loop em {num_str})")
-
-        return lines, numbering
-
-
-
     if node_id in number_map:
 
         prev = number_map[node_id]
@@ -622,6 +629,14 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
 
 
+    if node_id in path_set:
+
+        lines.append(f"{indent}(loop em {num_str})")
+
+        return lines, numbering
+
+
+
     outs = outgoing.get(node_id, [])
 
     is_gateway = node["type"].startswith("Gateway")
@@ -637,6 +652,8 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
     # Se for gateway apenas de convergência (exceto paralelos), não imprime linha; passa adiante
 
     if is_converging_gateway and outs and not is_parallel_convergence:
+
+        number_map[node_id] = {"num_str": num_str, "parts": numbering}
 
         new_path = path_set | {node_id}
 
@@ -688,7 +705,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
     task_kinds = {
 
-        "task": "(sem tipo)",
+        "task": "Sem tipo",
 
         "userTask": "Atividade de Usuário",
 
@@ -789,7 +806,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
             if not flow["name"] and node.get("kind") == "parallelGateway":
 
-                branch = f"Paralelo {branch_idx:02d}"
+                branch = f"Caminho {branch_idx:02d}"
 
             else:
 
@@ -803,7 +820,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
                 child,
 
-                numbering + [child_num],
+                numbering + [child_num, 1],
 
                 nodes,
 

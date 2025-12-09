@@ -320,6 +320,7 @@ with st.container():
 uploaded = st.file_uploader("Arquivo BPMN ou XML", type=["bpmn", "xml"])
 
 if uploaded:
+    uploaded.seek(0)
     data = uploaded.read()
     if not data:
         st.warning("O arquivo enviado está vazio.")
