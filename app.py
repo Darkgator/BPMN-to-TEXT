@@ -420,7 +420,7 @@ else:
 
 st.markdown(
     """
-    <div style="margin-top:24px; font-size:12px; color:#b6c2d2; opacity:0.7; text-align:center;">
+    <div style="margin-top:24px; font-size:12px; color:#b6c2d2; opacity:0.7; text-align:left;">
     💡 Sobre o envio de arquivos BPMN: Para melhorar continuamente nossa ferramenta, utilizamos os diagramas BPMN enviados para aprimorar nossa inteligência artificial. Isso nos ajuda a oferecer sugestões mais precisas e recursos cada vez melhores para você. Seus dados são tratados com segurança.
     </div>
     """,
