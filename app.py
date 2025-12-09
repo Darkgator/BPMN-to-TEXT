@@ -10,6 +10,7 @@ import gspread
 import streamlit as st
 import streamlit.components.v1 as components
 from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 
@@ -70,7 +71,28 @@ def _sheets_config_ok() -> bool:
 
 
 def _drive_config_ok() -> bool:
-    return "gcp_service_account" in st.secrets and "drive" in st.secrets
+    return ("gcp_service_account" in st.secrets or "oauth_client" in st.secrets) and "drive" in st.secrets
+
+
+def _drive_credentials():
+    """Retorna credenciais do Drive usando OAuth do usuário (preferencial) ou conta de serviço."""
+    scopes = ["https://www.googleapis.com/auth/drive.file"]
+    if "oauth_client" in st.secrets:
+        conf = st.secrets["oauth_client"]
+        return Credentials(
+            None,
+            refresh_token=conf["refresh_token"],
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=conf["client_id"],
+            client_secret=conf["client_secret"],
+            scopes=scopes,
+        )
+    if "gcp_service_account" in st.secrets:
+        return service_account.Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=scopes,
+        )
+    raise ValueError("Nenhuma configuracao de Drive encontrada")
 
 
 def _upload_to_drive(filename: str, content: bytes) -> tuple[bool, str]:
@@ -78,10 +100,7 @@ def _upload_to_drive(filename: str, content: bytes) -> tuple[bool, str]:
     if not _drive_config_ok():
         return False, "Configuracao do Drive ausente."
     try:
-        creds = service_account.Credentials.from_service_account_info(
-            st.secrets["gcp_service_account"],
-            scopes=["https://www.googleapis.com/auth/drive.file"],
-        )
+        creds = _drive_credentials()
         drive_conf = st.secrets["drive"]
         folder_id = drive_conf["folder_id"]
         drive = build("drive", "v3", credentials=creds)
