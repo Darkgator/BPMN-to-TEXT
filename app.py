@@ -126,7 +126,9 @@ def _upload_to_drive(filename: str, content: bytes) -> tuple[bool, str]:
         drive_conf = st.secrets["drive"]
         folder_id = drive_conf["folder_id"]
         drive = build("drive", "v3", credentials=creds)
-        unique_name = f"{uuid4().hex}-{Path(filename).name}"
+        stamp = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d%m%Y-%H%M%S")
+        safe_name = Path(filename).name
+        unique_name = f"{stamp}-{safe_name}"
         media = MediaIoBaseUpload(
             io.BytesIO(content),
             mimetype="application/octet-stream",
