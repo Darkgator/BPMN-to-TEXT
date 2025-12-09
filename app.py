@@ -3,6 +3,7 @@ import html
 import io
 import json
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from uuid import uuid4
 
@@ -59,7 +60,7 @@ def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
         ws = gc.open_by_key(sheets_conf["spreadsheet_id"]).worksheet(
             sheets_conf["worksheet_name"]
         )
-        stamp = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        stamp = datetime.now(ZoneInfo("America/Sao_Paulo")).strftime("%d/%m/%Y %H:%M:%S")
         ws.append_row(
             [stamp, filename, extracted_text],
             value_input_option="RAW",
@@ -336,9 +337,7 @@ if uploaded:
             sheet_text = display_text
             if len(sheet_text) > 48000:
                 sheet_text = sheet_text[:48000] + "\n...[truncado para caber no Sheets]"
-            sheet_ok, sheet_err = _append_to_sheet(uploaded.name, sheet_text)
-            if not sheet_ok:
-                st.warning(f"Não foi possível registrar no Sheets: {sheet_err}")
+            _append_to_sheet(uploaded.name, sheet_text)
             download_b64 = base64.b64encode(result_text.encode("utf-8")).decode("ascii")
             height_px = min(max((len(lines) + 2) * 22, 480), 1400)
             text_area_id = f"result-text-{uuid4().hex}"
