@@ -9,6 +9,7 @@ from uuid import uuid4
 import gspread
 import streamlit as st
 import streamlit.components.v1 as components
+from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -52,7 +53,8 @@ def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
     if "gcp_service_account" not in st.secrets or "sheets" not in st.secrets:
         return False, "Configuracao do Sheets ausente."
     try:
-        gc = gspread.service_account_from_dict(st.secrets["gcp_service_account"])
+        creds = _sheet_credentials()
+        gc = gspread.authorize(creds)
         sheets_conf = st.secrets["sheets"]
         ws = gc.open_by_key(sheets_conf["spreadsheet_id"]).worksheet(
             sheets_conf["worksheet_name"]
@@ -69,6 +71,28 @@ def _append_to_sheet(filename: str, extracted_text: str) -> tuple[bool, str]:
 
 def _drive_config_ok() -> bool:
     return ("gcp_service_account" in st.secrets or "oauth_client" in st.secrets) and "drive" in st.secrets
+
+
+def _sheet_credentials():
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    if "oauth_client" in st.secrets:
+        conf = st.secrets["oauth_client"]
+        creds = Credentials(
+            None,
+            refresh_token=conf["refresh_token"],
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=conf["client_id"],
+            client_secret=conf["client_secret"],
+            scopes=scopes,
+        )
+        creds.refresh(Request())
+        return creds
+    if "gcp_service_account" in st.secrets:
+        return service_account.Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=scopes,
+        )
+    raise ValueError("Configuracao do Sheets ausente.")
 
 
 def _drive_credentials():
@@ -312,7 +336,9 @@ if uploaded:
             sheet_text = display_text
             if len(sheet_text) > 48000:
                 sheet_text = sheet_text[:48000] + "\n...[truncado para caber no Sheets]"
-            _append_to_sheet(uploaded.name, sheet_text)
+            sheet_ok, sheet_err = _append_to_sheet(uploaded.name, sheet_text)
+            if not sheet_ok:
+                st.warning(f"Não foi possível registrar no Sheets: {sheet_err}")
             download_b64 = base64.b64encode(result_text.encode("utf-8")).decode("ascii")
             height_px = min(max((len(lines) + 2) * 22, 480), 1400)
             text_area_id = f"result-text-{uuid4().hex}"
