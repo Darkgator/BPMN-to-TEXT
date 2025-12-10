@@ -67,14 +67,14 @@ def pick_process(defs):
 
 
 def collect_elements(proc):
-    """Extrai n?s (tarefas, gateways, eventos) e sequenceFlows, marcando links catch/throw."""
+    """Extrai nós (tarefas, gateways, eventos) e sequenceFlows, marcando links catch/throw."""
     nodes = {}
     link_by_name = defaultdict(lambda: {"catch": [], "throw": []})
 
     tag_map = {
         "task": "Atividade",
-        "userTask": "Atividade (usu?rio)",
-        "serviceTask": "Atividade (servi?o)",
+        "userTask": "Atividade (usuário)",
+        "serviceTask": "Atividade (serviço)",
         "sendTask": "Atividade (envio)",
         "receiveTask": "Atividade (recebimento)",
         "manualTask": "Atividade (manual)",
@@ -84,11 +84,11 @@ def collect_elements(proc):
         "parallelGateway": "Gateway paralelo",
         "inclusiveGateway": "Gateway inclusivo",
         "eventBasedGateway": "Gateway baseado em evento",
-        "startEvent": "Evento de in?cio",
+        "startEvent": "Evento de início",
         "endEvent": "Evento de fim",
-        "intermediateThrowEvent": "Evento intermedi?rio",
-        "intermediateCatchEvent": "Evento intermedi?rio",
-        "boundaryEvent": "Evento intermedi?rio (fronteira)",
+        "intermediateThrowEvent": "Evento intermediário",
+        "intermediateCatchEvent": "Evento intermediário",
+        "boundaryEvent": "Evento intermediário (fronteira)",
     }
 
     def event_flavor(elem):
@@ -116,7 +116,7 @@ def collect_elements(proc):
             if tag_key == 'intermediateThrowEvent' and link_name:
                 link_by_name[link_name]['throw'].append(elem.attrib['id'])
 
-    # Marca captura/disparo s? se houver ambos com o mesmo nome
+    # Marca captura/disparo só se houver ambos com o mesmo nome
     for nm, group in link_by_name.items():
         if group['catch'] and group['throw']:
             for cid in group['catch']:
