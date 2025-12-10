@@ -1,19 +1,9 @@
 """
-
-Extrai a sequência básica de atividades, gateways e atores (lanes) de um BPMN.
-
-Etapas já cobertas: sequência, gateways, atores.
-
-Pendentes: numeração perfeita em convergências/loops complexos, tipos de atividade, sistemas/documentos, anotações etc.
-
-
-
-Uso:
-
-    python "BPMN para TEXTO.py" "Recrutar e. Selecionar Candidatos 01.bpmn"
-
-Se nenhum caminho for informado, usa o arquivo padrão na mesma pasta.
-
+Gera narrativa hierárquica numerada a partir de um BPMN (tarefas, eventos,
+gateways, atores/lanes, anotações, sistemas/documentos), cuidando de retornos
+em convergência para evitar loops falsos e mantendo a numeração por caminhos.
+Uso rápido: python bpmn_to_text.py "<arquivo>.bpmn" (ou .xml). Se não informar,
+abre um BPMN padrão da pasta.
 """
 
 
