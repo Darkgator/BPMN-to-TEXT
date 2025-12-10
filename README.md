@@ -1,6 +1,11 @@
 # BPMN to TEXT
 
-Aplicacao em Streamlit que recebe arquivos BPMN/XML e devolve a narrativa em texto. Ideal para usar em IAs generativas (ChatGPT, Gemini, Claude, etc.), que lidam melhor com texto estruturado do que com BPMN puro. O processamento fica em `bpmn_to_text.py` e a interface em `app.py`.
+Aplicação em Streamlit que recebe arquivos BPMN/XML e devolve a narrativa em texto. Ideal para usar em IAs generativas (ChatGPT, Gemini, Claude, etc.), que lidam melhor com texto estruturado do que com BPMN puro. O processamento fica em `bpmn_to_text.py` e a interface em `app.py`.
+
+Principais recursos:
+- Numeração hierárquica com retomada após convergência de gateways.
+- Identificação de eventos intermediários de link (disparo/captura) no fluxo correto.
+- Limpeza de campos (ator/sistema/documento/anotação) para saída em linha única.
 
 ## Como usar (online)
 - App publicado: https://bpmn-to-text.streamlit.app/

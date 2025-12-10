@@ -1,9 +1,9 @@
 """
 Gera narrativa hierárquica numerada a partir de um BPMN (tarefas, eventos,
 gateways, atores/lanes, anotações, sistemas/documentos), cuidando de retornos
-em convergência para evitar loops falsos e mantendo a numeração por caminhos.
-Uso rápido: python bpmn_to_text.py "<arquivo>.bpmn" (ou .xml). Se não informar,
-abre um BPMN padrão da pasta.
+em convergência e de eventos de link (captura/disparo) para evitar loops falsos
+e manter a numeração por caminhos. Uso rápido: python bpmn_to_text.py
+"<arquivo>.bpmn" (ou .xml). Se não informar, abre um BPMN padrão da pasta.
 """
 
 
