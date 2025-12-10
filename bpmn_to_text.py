@@ -58,16 +58,19 @@ def pick_process(defs):
 
 
 
+
+
+
+
 def collect_elements(proc):
-
-    """Extrai nós (tarefas, gateways, eventos) e sequenceFlows."""
-
+    """Extrai n?s (tarefas, gateways, eventos) e sequenceFlows, marcando links catch/throw."""
     nodes = {}
+    link_by_name = defaultdict(lambda: {"catch": [], "throw": []})
 
     tag_map = {
         "task": "Atividade",
-        "userTask": "Atividade (usuário)",
-        "serviceTask": "Atividade (serviço)",
+        "userTask": "Atividade (usu?rio)",
+        "serviceTask": "Atividade (servi?o)",
         "sendTask": "Atividade (envio)",
         "receiveTask": "Atividade (recebimento)",
         "manualTask": "Atividade (manual)",
@@ -77,84 +80,117 @@ def collect_elements(proc):
         "parallelGateway": "Gateway paralelo",
         "inclusiveGateway": "Gateway inclusivo",
         "eventBasedGateway": "Gateway baseado em evento",
-        "startEvent": "Evento de início",
+        "startEvent": "Evento de in?cio",
         "endEvent": "Evento de fim",
-        "intermediateThrowEvent": "Evento intermediário",
-        "intermediateCatchEvent": "Evento intermediário",
-        "boundaryEvent": "Evento intermediário (fronteira)",
+        "intermediateThrowEvent": "Evento intermedi?rio",
+        "intermediateCatchEvent": "Evento intermedi?rio",
+        "boundaryEvent": "Evento intermedi?rio (fronteira)",
     }
 
-
-
-
-
     def event_flavor(elem):
-
         for child in elem:
-
-            tag = child.tag.split("}")[-1]
-
-            if tag.endswith("EventDefinition"):
-
-                kind = tag.replace("EventDefinition", "")
-
-                return kind
-
-        return ""
-
-
+            tag = child.tag.split('}')[-1]
+            if tag.endswith('EventDefinition'):
+                kind = tag.replace('EventDefinition', '')
+                link_name = child.attrib.get('name', '').strip()
+                return kind, link_name
+        return '', ''
 
     for tag_key, human in tag_map.items():
-
         for elem in proc.findall(f"bpmn:{tag_key}", NS):
-
-            detail = event_flavor(elem) if "Event" in tag_key else ""
-
-            nodes[elem.attrib["id"]] = {
-
-                "type": human,
-
-                "name": elem.attrib.get("name", ""),
-
-                "kind": tag_key,
-
-                "event_flavor": detail,
-
+            detail, link_name = event_flavor(elem) if 'Event' in tag_key else ('', '')
+            nodes[elem.attrib['id']] = {
+                'type': human,
+                'name': elem.attrib.get('name', ''),
+                'kind': tag_key,
+                'event_flavor': detail,
+                'link_name': link_name,
+                'catch_throw': '',
             }
+            if tag_key == 'intermediateCatchEvent' and link_name:
+                link_by_name[link_name]['catch'].append(elem.attrib['id'])
+            if tag_key == 'intermediateThrowEvent' and link_name:
+                link_by_name[link_name]['throw'].append(elem.attrib['id'])
 
-
+    # Marca captura/disparo s? se houver ambos com o mesmo nome
+    for nm, group in link_by_name.items():
+        if group['catch'] and group['throw']:
+            for cid in group['catch']:
+                if cid in nodes:
+                    nodes[cid]['catch_throw'] = 'captura'
+            for tid in group['throw']:
+                if tid in nodes:
+                    nodes[tid]['catch_throw'] = 'disparo'
 
     flows = {}
-
     outgoing = defaultdict(list)
-
     incoming = defaultdict(list)
 
-    for sf in proc.findall("bpmn:sequenceFlow", NS):
-
-        flow_id = sf.attrib["id"]
-
+    for sf in proc.findall('bpmn:sequenceFlow', NS):
+        flow_id = sf.attrib['id']
         flows[flow_id] = {
-
-            "name": sf.attrib.get("name", "").strip(),
-
-            "source": sf.attrib.get("sourceRef"),
-
-            "target": sf.attrib.get("targetRef"),
-
+            'name': sf.attrib.get('name', '').strip(),
+            'source': sf.attrib.get('sourceRef'),
+            'target': sf.attrib.get('targetRef'),
         }
+        outgoing[flows[flow_id]['source']].append(flow_id)
+        incoming[flows[flow_id]['target']].append(flow_id)
 
-        outgoing[flows[flow_id]["source"]].append(flow_id)
+    # Se um catch de link não tem incoming e há throw correspondente, insere o catch no caminho do seu target
+    for nm, group in link_by_name.items():
+        if not (group['catch'] and group['throw']):
+            continue
+        for cid in group['catch']:
+            if incoming.get(cid):
+                continue
+            outs = outgoing.get(cid, [])
+            # Se o catch tem outgoing (caso raro), apenas garante que incoming vazio não bloqueie
+            if outs:
+                continue
+            # pega o primeiro flow do target original conectado ao throw correspondente
+            for tid in group['throw']:
+                if not outgoing.get(tid):
+                    continue
+                # usa o primeiro fluxo do throw
+                first_out = outgoing[tid][0]
+                tgt = flows[first_out]['target']
+                # redireciona incoming do target para o catch
+                for inc_id in list(incoming.get(tgt, [])):
+                    flows[inc_id]['target'] = cid
+                    incoming[cid].append(inc_id)
+                    incoming[tgt].remove(inc_id)
+                # cria fluxo catch -> target se não existir
+                if not any(flows[f]['target'] == tgt for f in outgoing.get(cid, [])):
+                    flow_id = f"_linkcatch_{cid}_{tgt}"
+                    flows[flow_id] = {
+                        'name': f"Link: {nm}" if nm else 'Link',
+                        'source': cid,
+                        'target': tgt,
+                        'is_link': True,
+                    }
+                    outgoing[cid].append(flow_id)
+                    incoming[tgt].append(flow_id)
+                break
 
-        incoming[flows[flow_id]["target"]].append(flow_id)
-
-
+    # Se um throw de link não tem saída, cria fluxo sintético para o catch correspondente
+    for nm, group in link_by_name.items():
+        if not (group['catch'] and group['throw']):
+            continue
+        for tid in group['throw']:
+            if outgoing.get(tid):
+                continue
+            for cid in group['catch']:
+                flow_id = f"_link_{tid}_{cid}"
+                flows[flow_id] = {
+                    'name': f"Link: {nm}" if nm else 'Link',
+                    'source': tid,
+                    'target': cid,
+                    'is_link': True,
+                }
+                outgoing[tid].append(flow_id)
+                incoming[cid].append(flow_id)
 
     return nodes, flows, outgoing, incoming
-
-
-
-
 
 def collect_lanes(proc):
 
@@ -545,6 +581,16 @@ def describe_node(node):
 
     is_event = "Event" in node.get("kind", "")
 
+    catch_throw = None
+
+    if node.get("kind") == "intermediateCatchEvent":
+
+        catch_throw = "captura"
+
+    elif node.get("kind") == "intermediateThrowEvent":
+
+        catch_throw = "disparo"
+
     if is_gateway and not name:
 
         return node["type"]
@@ -555,7 +601,15 @@ def describe_node(node):
 
         flavor = node.get("event_flavor") or ""
 
-        type_label = f"{node['type']} ({flavor})" if flavor else node["type"]
+        if flavor == "link" and catch_throw:
+
+            type_label = f"Evento intermediário (link, {catch_throw})"
+
+        else:
+
+            parts = [p for p in (flavor, catch_throw) if p]
+
+            type_label = f"{node['type']} ({', '.join(parts)})" if parts else node["type"]
 
         return f"{type_label}: {display}"
 
