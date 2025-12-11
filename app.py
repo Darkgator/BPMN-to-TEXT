@@ -420,7 +420,7 @@ if uploaded:
                 }})();
                 </script>
                 """
-                components.html(actions_html, height=90)
+                st.markdown(actions_html, unsafe_allow_html=True)
                 safe_text = html.escape(display_text)
                 st.markdown(
                     f"<textarea id='{text_area_id}' class='result-textarea' readonly style='height:{height_px}px'>{safe_text}</textarea>",
