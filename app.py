@@ -348,80 +348,72 @@ if uploaded:
                 copy_btn_id = f"copy-btn-{uuid4().hex}"
                 copy_status_id = f"copy-status-{uuid4().hex}"
                 copy_payload = json.dumps(display_text)
-                # download native + bloco HTML com botões
-                st.download_button(
-                    label="Baixar texto (.txt)",
-                    data=result_text,
-                    file_name=default_name,
-                    mime="text/plain",
-                    use_container_width=False,
-                )
-                actions_html = f"""
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0.4rem 0;">
-                    <a download="{default_name}" href="data:text/plain;base64,{download_b64}" style="
-                        background:{PALETTE['blue']};
-                        color:white;
-                        padding:0.6rem 1rem;
-                        border-radius:8px;
-                        text-decoration:none;
-                        font-weight:600;
-                        display:inline-flex;
-                        align-items:center;
-                        justify-content:center;
-                    ">Baixar texto (.txt)</a>
-                    <button type="button" id="{copy_btn_id}" style="
-                        background:{PALETTE['coral']};
-                        color:white;
-                        border:none;
-                        border-radius:8px;
-                        padding:0.6rem 1rem;
-                        cursor:pointer;
-                        font-weight:600;
-                    ">Copiar texto</button>
-                    <span id="{copy_status_id}" style="color:#c7d4f5;font-weight:600;font-size:0.95rem;"></span>
-                </div>
-                <script>
-                (function() {{
-                    const btn = document.getElementById("{copy_btn_id}");
-                    const status = document.getElementById("{copy_status_id}");
-                    const textToCopy = {copy_payload};
-                    if (!btn) return;
-                    const showStatus = (msg, resetMs = 1500) => {{
-                        if (!status) return;
-                        status.textContent = msg;
-                        if (resetMs) {{
-                            setTimeout(() => status.textContent = "", resetMs);
-                        }}
-                    }};
-                    btn.addEventListener("click", async () => {{
-                        btn.disabled = true;
-                        showStatus("Copiando...");
-                        try {{
-                            if (navigator.clipboard && navigator.clipboard.writeText) {{
-                                await navigator.clipboard.writeText(textToCopy);
-                            }} else {{
-                                const temp = document.createElement("textarea");
-                                temp.value = textToCopy;
-                                temp.setAttribute("readonly", "");
-                                temp.style.position = "absolute";
-                                temp.style.left = "-9999px";
-                                document.body.appendChild(temp);
-                                temp.select();
-                                document.execCommand("copy");
-                                temp.remove();
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.download_button(
+                        label="Baixar texto (.txt)",
+                        data=result_text,
+                        file_name=default_name,
+                        mime="text/plain",
+                        use_container_width=True,
+                    )
+                with col2:
+                    actions_html = f"""
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0.4rem 0;">
+                        <button type="button" id="{copy_btn_id}" style="
+                            background:{PALETTE['coral']};
+                            color:white;
+                            border:none;
+                            border-radius:8px;
+                            padding:0.6rem 1rem;
+                            cursor:pointer;
+                            font-weight:600;
+                            width:100%;
+                        ">Copiar texto</button>
+                        <span id="{copy_status_id}" style="color:#c7d4f5;font-weight:600;font-size:0.95rem;"></span>
+                    </div>
+                    <script>
+                    (function() {{
+                        const btn = document.getElementById("{copy_btn_id}");
+                        const status = document.getElementById("{copy_status_id}");
+                        const textToCopy = {copy_payload};
+                        if (!btn) return;
+                        const showStatus = (msg, resetMs = 1500) => {{
+                            if (!status) return;
+                            status.textContent = msg;
+                            if (resetMs) {{
+                                setTimeout(() => status.textContent = "", resetMs);
                             }}
-                            showStatus("Copiado!", 1800);
-                        }} catch (err) {{
-                            console.error("Clipboard copy failed", err);
-                            showStatus("Falhou ao copiar", 2500);
-                        }} finally {{
-                            btn.disabled = false;
-                        }}
-                    }});
-                }})();
-                </script>
-                """
-                components.html(actions_html, height=140)
+                        }};
+                        btn.addEventListener("click", async () => {{
+                            btn.disabled = true;
+                            showStatus("Copiando...");
+                            try {{
+                                if (navigator.clipboard && navigator.clipboard.writeText) {{
+                                    await navigator.clipboard.writeText(textToCopy);
+                                }} else {{
+                                    const temp = document.createElement("textarea");
+                                    temp.value = textToCopy;
+                                    temp.setAttribute("readonly", "");
+                                    temp.style.position = "absolute";
+                                    temp.style.left = "-9999px";
+                                    document.body.appendChild(temp);
+                                    temp.select();
+                                    document.execCommand("copy");
+                                    temp.remove();
+                                }}
+                                showStatus("Copiado!", 1800);
+                            }} catch (err) {{
+                                console.error("Clipboard copy failed", err);
+                                showStatus("Falhou ao copiar", 2500);
+                            }} finally {{
+                                btn.disabled = false;
+                            }}
+                        }});
+                    }})();
+                    </script>
+                    """
+                    components.html(actions_html, height=70)
                 st.code(display_text, language="markdown")
                 safe_text = html.escape(display_text)
                 st.markdown(

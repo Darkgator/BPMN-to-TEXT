@@ -40,6 +40,13 @@ NS = {
 
 
 
+def _clean_inline(text: str) -> str:
+
+    """Remove quebras e multiplos espacos para uso em linha unica."""
+
+    return " ".join((text or "").split())
+
+
 def pick_process(defs):
 
     """Escolhe o processo principal: o primeiro que tiver startEvent."""
@@ -208,7 +215,7 @@ def collect_lanes(proc):
 
         lid = lane.attrib.get("id")
 
-        lname = lane.attrib.get("name", "") or "(sem ator)"
+        lname = _clean_inline(lane.attrib.get("name", "") or "(sem ator)")
 
         if lid:
 
@@ -282,7 +289,7 @@ def collect_artifacts(defs, node_ids: set) -> Dict[str, List[Tuple[str, str]]]:
 
         if text_el is not None:
 
-            text_val = (text_el.text or "").strip()
+            text_val = _clean_note(text_el.text or "")
 
             if text_val:
 
@@ -294,7 +301,7 @@ def collect_artifacts(defs, node_ids: set) -> Dict[str, List[Tuple[str, str]]]:
 
     for dobj in defs.findall(".//bpmn:dataObject", NS):
 
-        name = (dobj.attrib.get("name") or "").strip()
+        name = _clean_inline(dobj.attrib.get("name", "") or "")
 
         data_object_defs[dobj.attrib.get("id")] = name
 
@@ -304,7 +311,7 @@ def collect_artifacts(defs, node_ids: set) -> Dict[str, List[Tuple[str, str]]]:
 
     for ds in defs.findall(".//bpmn:dataStore", NS):
 
-        name = (ds.attrib.get("name") or "").strip()
+        name = _clean_inline(ds.attrib.get("name", "") or "")
 
         data_store_defs[ds.attrib.get("id")] = name
 
@@ -316,7 +323,7 @@ def collect_artifacts(defs, node_ids: set) -> Dict[str, List[Tuple[str, str]]]:
 
         ref = dobj.attrib.get("dataObjectRef")
 
-        name = (dobj.attrib.get("name") or "").strip()
+        name = _clean_inline(dobj.attrib.get("name", "") or "")
 
         if not name and ref in data_object_defs:
 
@@ -328,7 +335,7 @@ def collect_artifacts(defs, node_ids: set) -> Dict[str, List[Tuple[str, str]]]:
 
     for dobj in defs.findall(".//bpmn:dataObject", NS):
 
-        name = (dobj.attrib.get("name") or "").strip()
+        name = _clean_inline(dobj.attrib.get("name", "") or "")
 
         name = name or dobj.attrib.get("id")
 
@@ -769,7 +776,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
     if node.get("kind") in task_kinds:
 
-        actor = node_lane.get(node_id, "(ator nao identificado)")
+        actor = _clean_inline(node_lane.get(node_id, "(ator nao identificado)"))
 
         type_label = task_kinds[node["kind"]]
 
@@ -777,15 +784,15 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
     elif node.get("kind") in {"subProcess", "callActivity"}:
 
-        actor = node_lane.get(node_id, "(ator nao identificado)")
+        actor = _clean_inline(node_lane.get(node_id, "(ator nao identificado)"))
 
         lines.append(f"{detail_indent}Ator: {actor}")
 
 
 
-    docs = sorted({text for label, text in artifacts.get(node_id, []) if label == "Documento"})
+    docs = sorted({_clean_inline(text) for label, text in artifacts.get(node_id, []) if label == "Documento"})
 
-    systems = sorted({text for label, text in artifacts.get(node_id, []) if label == "Sistema"})
+    systems = sorted({_clean_inline(text) for label, text in artifacts.get(node_id, []) if label == "Sistema"})
 
     notes = []
 
