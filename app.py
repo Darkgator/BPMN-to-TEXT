@@ -348,6 +348,13 @@ if uploaded:
                 copy_btn_id = f"copy-btn-{uuid4().hex}"
                 copy_status_id = f"copy-status-{uuid4().hex}"
                 copy_payload = json.dumps(display_text)
+                st.download_button(
+                    label="Baixar texto (.txt)",
+                    data=result_text,
+                    file_name=default_name,
+                    mime="text/plain",
+                    use_container_width=False,
+                )
                 actions_html = f"""
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:0.6rem;">
                     <a download="{default_name}" href="data:text/plain;base64,{download_b64}" style="
