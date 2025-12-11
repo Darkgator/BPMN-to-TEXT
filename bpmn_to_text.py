@@ -564,7 +564,7 @@ def compare_parts(a, b):
 
 def describe_node(node):
 
-    name = node.get("name") or ""
+    name = _clean_inline(node.get("name") or "")
 
     task_kinds = {
         "task",
@@ -858,7 +858,7 @@ def walk(node_id, numbering, nodes, flows, outgoing, incoming, node_lane, path_s
 
             else:
 
-                branch = flow["name"] or f"Caminho {child_num}"
+                branch = _clean_inline(flow["name"]) or f"Caminho {child_num}"
 
             branch_indent = indent + "    "
 
@@ -1265,4 +1265,3 @@ def render_bpmn_bytes(content: bytes, filename: str = "arquivo") -> str:
         except FileNotFoundError:
 
             pass
-
