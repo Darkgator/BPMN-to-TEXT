@@ -1051,13 +1051,13 @@ def render_bpmn(path: Path) -> str:
 
         lines = [f"Titulo: {title}"]
 
-        for idx, start_id in enumerate(start_events, start=1):
+        for start_id in start_events:
 
             branch_lines, _last = walk(
 
                 start_id,
 
-                [idx],
+                [1],
 
                 nodes,
 
